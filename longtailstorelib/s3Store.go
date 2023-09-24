@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type S3Options struct {
@@ -65,15 +64,11 @@ func NewS3BlobStore(u *url.URL, opts ...BlobStoreOption) (BlobStore, error) {
 
 func (blobStore *s3BlobStore) NewClient(ctx context.Context) (BlobClient, error) {
 	const fname = "s3BlobStore.NewClient"
-	log := logrus.WithFields(logrus.Fields{
-		"fname": fname,
-	})
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, fname)
 	}
 	if blobStore.options.Anonymous {
-		log.Error("Using anon creds")
 		cfg.Credentials = aws.AnonymousCredentials{}
 	}
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -185,16 +180,12 @@ func (blobObject *s3BlobObject) Exists() (bool, error) {
 
 func (blobObject *s3BlobObject) Write(data []byte) (bool, error) {
 	const fname = "s3BlobObject.Write()"
-	log := logrus.WithFields(logrus.Fields{
-		"fname": fname,
-	})
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(blobObject.client.store.bucketName),
 		Key:    aws.String(blobObject.path),
 		Body:   bytes.NewReader(data),
 	}
 	if blobObject.client.store.options.CannedACL != "" {
-		log.Errorf("Setting ACL to %s", blobObject.client.store.options.CannedACL)
 		input.ACL = types.ObjectCannedACL(blobObject.client.store.options.CannedACL)
 	}
 	_, err := blobObject.client.client.PutObject(blobObject.client.ctx, input)
