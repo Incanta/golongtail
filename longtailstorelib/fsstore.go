@@ -62,6 +62,11 @@ func (blobStore *fsBlobStore) String() string {
 	return fmt.Sprintf("fsblob://%s", blobStore.prefix)
 }
 
+func (blobStore *fsBlobStore) Options() BlobStoreOption {
+	var options BlobStoreOption
+	return options
+}
+
 func (blobClient *fsBlobClient) NewObject(filepath string) (BlobObject, error) {
 	fsPath := NormalizeFileSystemPath(path.Join(blobClient.store.prefix, filepath))
 	return &fsBlobObject{client: blobClient, path: fsPath, metageneration: -1}, nil

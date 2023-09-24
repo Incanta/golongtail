@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -35,10 +36,9 @@ type s3BlobClient struct {
 }
 
 type s3BlobObject struct {
-	ctx       context.Context
-	client    *s3BlobClient
-	path      string
-	cannedACL string
+	ctx    context.Context
+	client *s3BlobClient
+	path   string
 }
 
 // NewS3BlobStore ...
@@ -88,13 +88,24 @@ func (blobStore *s3BlobStore) String() string {
 	return "s3://" + blobStore.bucketName + "/" + blobStore.prefix
 }
 
+func (blobStore *s3BlobStore) Options() BlobStoreOption {
+	return func(options interface{}) {
+		s3options, ok := options.(*S3Options)
+		if !ok {
+			return
+		}
+		s3options.EndpointResolverURI = blobStore.options.EndpointResolverURI
+		s3options.Anonymous = blobStore.options.Anonymous
+		s3options.CannedACL = blobStore.options.CannedACL
+	}
+}
+
 func (blobClient *s3BlobClient) NewObject(path string) (BlobObject, error) {
 	s3Path := blobClient.store.prefix + path
 	return &s3BlobObject{
-			ctx:       blobClient.ctx,
-			client:    blobClient,
-			path:      s3Path,
-			cannedACL: blobClient.store.options.CannedACL},
+			ctx:    blobClient.ctx,
+			client: blobClient,
+			path:   s3Path},
 		nil
 }
 
@@ -156,17 +167,18 @@ func (blobObject *s3BlobObject) LockWriteVersion() (bool, error) {
 
 func (blobObject *s3BlobObject) Exists() (bool, error) {
 	const fname = "s3BlobObject.Exists()"
-	input := &s3.GetObjectAclInput{
+	input := &s3.HeadObjectInput{
 		Bucket: aws.String(blobObject.client.store.bucketName),
 		Key:    aws.String(blobObject.path),
 	}
-	_, err := blobObject.client.client.GetObjectAcl(blobObject.client.ctx, input)
+	_, err := blobObject.client.client.HeadObject(blobObject.client.ctx, input)
 	if err != nil {
-		var nsk *types.NoSuchKey
-		if errors.As(err, &nsk) {
+		str := err.Error()
+		if strings.Contains(str, "StatusCode: 404") {
 			return false, nil
+		} else {
+			return false, errors.Wrap(err, fname)
 		}
-		return false, errors.Wrap(err, fname)
 	}
 	return true, nil
 }
@@ -181,9 +193,9 @@ func (blobObject *s3BlobObject) Write(data []byte) (bool, error) {
 		Key:    aws.String(blobObject.path),
 		Body:   bytes.NewReader(data),
 	}
-	if blobObject.cannedACL != "" {
-		log.Errorf("Setting ACL to %s", blobObject.cannedACL)
-		input.ACL = types.ObjectCannedACL(blobObject.cannedACL)
+	if blobObject.client.store.options.CannedACL != "" {
+		log.Errorf("Setting ACL to %s", blobObject.client.store.options.CannedACL)
+		input.ACL = types.ObjectCannedACL(blobObject.client.store.options.CannedACL)
 	}
 	_, err := blobObject.client.client.PutObject(blobObject.client.ctx, input)
 	if err != nil {

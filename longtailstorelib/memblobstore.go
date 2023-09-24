@@ -47,6 +47,11 @@ func (blobStore *memBlobStore) String() string {
 	return "memstore"
 }
 
+func (blobStore *memBlobStore) Options() BlobStoreOption {
+	var options BlobStoreOption
+	return options
+}
+
 func (blobClient *memBlobClient) NewObject(filepath string) (BlobObject, error) {
 	return &memBlobObject{client: blobClient, path: filepath}, nil
 }

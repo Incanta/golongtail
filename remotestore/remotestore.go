@@ -1895,7 +1895,7 @@ func readRemoteStoreIndex(
 
 	if accessType == ReadOnly && len(optionalStoreIndexPaths) > 0 {
 		for index, optionalStoreIndexPath := range optionalStoreIndexPaths {
-			oneStoreIndex, err := readStoreIndexFromURI(ctx, optionalStoreIndexPath, blobStoreOptions...)
+			oneStoreIndex, err := readStoreIndexFromURI(ctx, optionalStoreIndexPath, blobStore.Options())
 			if err != nil {
 				storeIndex.Dispose()
 				break

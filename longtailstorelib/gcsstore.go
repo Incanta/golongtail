@@ -77,6 +77,11 @@ func (blobStore *gcsBlobStore) String() string {
 	return "gs://" + blobStore.bucketName + "/" + blobStore.prefix
 }
 
+func (blobStore *gcsBlobStore) Options() BlobStoreOption {
+	var options BlobStoreOption
+	return options
+}
+
 func (blobClient *gcsBlobClient) NewObject(path string) (BlobObject, error) {
 	gcsPath := blobClient.store.prefix + path
 	objHandle := blobClient.bucket.Object(gcsPath)

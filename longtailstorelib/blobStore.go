@@ -58,6 +58,7 @@ type BlobClient interface {
 type BlobStore interface {
 	NewClient(ctx context.Context) (BlobClient, error)
 	String() string
+	Options() BlobStoreOption
 }
 
 type BlobStoreOption func(options interface{})
