@@ -32,7 +32,7 @@ func printStore(
 
 	readStoreIndexStartTime := time.Now()
 
-	vbuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	vbuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}

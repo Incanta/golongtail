@@ -34,7 +34,7 @@ func ls(
 	defer hashRegistry.Dispose()
 
 	readSourceStartTime := time.Now()
-	vbuffer, err := longtailutils.ReadFromURI(versionIndexPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	vbuffer, err := longtailutils.ReadFromURI(versionIndexPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}

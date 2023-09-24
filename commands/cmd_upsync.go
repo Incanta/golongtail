@@ -17,6 +17,7 @@ func upsync(
 	remoteStoreWorkerCount int,
 	blobStoreURI string,
 	s3EndpointResolverURI string,
+	s3CannedACL string,
 	sourceFolderPath string,
 	sourceIndexPath string,
 	targetFilePath string,
@@ -37,6 +38,7 @@ func upsync(
 		"remoteStoreWorkerCount":     remoteStoreWorkerCount,
 		"blobStoreURI":               blobStoreURI,
 		"s3EndpointResolverURI":      s3EndpointResolverURI,
+		"s3CannedACL":                s3CannedACL,
 		"sourceFolderPath":           sourceFolderPath,
 		"sourceIndexPath":            sourceIndexPath,
 		"targetFilePath":             targetFilePath,
@@ -100,7 +102,7 @@ func upsync(
 		enableFileMapping,
 		&sourceFolderScanner)
 
-	remoteStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, nil, jobs, remoteStoreWorkerCount, targetBlockSize, maxChunksPerBlock, remotestore.ReadWrite, enableFileMapping, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	remoteStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, nil, jobs, remoteStoreWorkerCount, targetBlockSize, maxChunksPerBlock, remotestore.ReadWrite, enableFileMapping, longtailutils.WithS3Options(s3EndpointResolverURI, false, s3CannedACL))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrapf(err, fname)
 	}
@@ -193,7 +195,7 @@ func upsync(
 	}
 	defer vbuffer.Dispose()
 
-	err = longtailutils.WriteToURI(targetFilePath, vbuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	err = longtailutils.WriteToURI(targetFilePath, vbuffer.ToBuffer(), longtailutils.WithS3Options(s3EndpointResolverURI, false, s3CannedACL))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrapf(err, fname)
 	}
@@ -214,7 +216,7 @@ func upsync(
 			err = errors.Wrapf(err, "Failed serializing store index for `%s`", versionLocalStoreIndexPath)
 			return storeStats, timeStats, errors.Wrapf(err, fname)
 		}
-		err = longtailutils.WriteToURI(versionLocalStoreIndexPath, versionLocalStoreIndexBuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		err = longtailutils.WriteToURI(versionLocalStoreIndexPath, versionLocalStoreIndexBuffer.ToBuffer(), longtailutils.WithS3Options(s3EndpointResolverURI, false, s3CannedACL))
 		if err != nil {
 			return storeStats, timeStats, errors.Wrapf(err, fname)
 		}
@@ -236,6 +238,7 @@ type UpsyncCmd struct {
 	MinBlockUsagePercentOption
 	StorageURIOption
 	S3EndpointResolverURLOption
+	S3CannedACLOption
 	CompressionOption
 	HashingOption
 	SourcePathIncludeRegExOption
@@ -249,6 +252,7 @@ func (r *UpsyncCmd) Run(ctx *Context) error {
 		ctx.NumRemoteWorkerCount,
 		r.StorageURI,
 		r.S3EndpointResolverURL,
+		r.S3CannedACL,
 		r.SourcePath,
 		r.SourceIndexPath,
 		r.TargetPath,

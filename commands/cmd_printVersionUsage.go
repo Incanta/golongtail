@@ -43,7 +43,7 @@ func printVersionUsage(
 
 	var indexStore longtaillib.Longtail_BlockStoreAPI
 
-	remoteIndexStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, nil, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, false, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	remoteIndexStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, nil, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, false, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
@@ -73,7 +73,7 @@ func printVersionUsage(
 	timeStats = append(timeStats, longtailutils.TimeStat{"Setup", setupTime})
 
 	readSourceStartTime := time.Now()
-	vbuffer, err := longtailutils.ReadFromURI(versionIndexPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	vbuffer, err := longtailutils.ReadFromURI(versionIndexPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}

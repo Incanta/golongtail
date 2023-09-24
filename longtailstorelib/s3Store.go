@@ -13,10 +13,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type S3Options struct {
 	EndpointResolverURI string
+	Anonymous           bool
+	CannedACL           string
 }
 
 type s3BlobStore struct {
@@ -32,9 +35,10 @@ type s3BlobClient struct {
 }
 
 type s3BlobObject struct {
-	ctx    context.Context
-	client *s3BlobClient
-	path   string
+	ctx       context.Context
+	client    *s3BlobClient
+	path      string
+	cannedACL string
 }
 
 // NewS3BlobStore ...
@@ -61,9 +65,16 @@ func NewS3BlobStore(u *url.URL, opts ...BlobStoreOption) (BlobStore, error) {
 
 func (blobStore *s3BlobStore) NewClient(ctx context.Context) (BlobClient, error) {
 	const fname = "s3BlobStore.NewClient"
+	log := logrus.WithFields(logrus.Fields{
+		"fname": fname,
+	})
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, fname)
+	}
+	if blobStore.options.Anonymous {
+		log.Error("Using anon creds")
+		cfg.Credentials = aws.AnonymousCredentials{}
 	}
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		if blobStore.options.EndpointResolverURI != "" {
@@ -80,9 +91,10 @@ func (blobStore *s3BlobStore) String() string {
 func (blobClient *s3BlobClient) NewObject(path string) (BlobObject, error) {
 	s3Path := blobClient.store.prefix + path
 	return &s3BlobObject{
-			ctx:    blobClient.ctx,
-			client: blobClient,
-			path:   s3Path},
+			ctx:       blobClient.ctx,
+			client:    blobClient,
+			path:      s3Path,
+			cannedACL: blobClient.store.options.CannedACL},
 		nil
 }
 
@@ -161,10 +173,17 @@ func (blobObject *s3BlobObject) Exists() (bool, error) {
 
 func (blobObject *s3BlobObject) Write(data []byte) (bool, error) {
 	const fname = "s3BlobObject.Write()"
+	log := logrus.WithFields(logrus.Fields{
+		"fname": fname,
+	})
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(blobObject.client.store.bucketName),
 		Key:    aws.String(blobObject.path),
 		Body:   bytes.NewReader(data),
+	}
+	if blobObject.cannedACL != "" {
+		log.Errorf("Setting ACL to %s", blobObject.cannedACL)
+		input.ACL = types.ObjectCannedACL(blobObject.cannedACL)
 	}
 	_, err := blobObject.client.client.PutObject(blobObject.client.ctx, input)
 	if err != nil {

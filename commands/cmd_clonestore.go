@@ -31,7 +31,7 @@ func validateOneVersion(
 		"skipValidate":              skipValidate,
 	})
 	log.Info(fname)
-	tbuffer, err := longtailutils.ReadFromURI(targetFilePath, longtailutils.WithS3EndpointResolverURI(targetEndpointResolverURI))
+	tbuffer, err := longtailutils.ReadFromURI(targetFilePath, longtailutils.WithS3Options(targetEndpointResolverURI, false, ""))
 	if err != nil {
 		return errors.Wrap(err, fname)
 	}
@@ -101,7 +101,7 @@ func downloadFromZip(targetPath string, sourceFileZipPath string, sourceEndpoint
 		return errors.Wrap(err, fname)
 	}
 	log.Infof("falling back to reading ZIP source from `%s`", sourceFileZipPath)
-	zipBytes, err := longtailutils.ReadFromURI(sourceFileZipPath, longtailutils.WithS3EndpointResolverURI(sourceEndpointResolverURI))
+	zipBytes, err := longtailutils.ReadFromURI(sourceFileZipPath, longtailutils.WithS3Options(sourceEndpointResolverURI, false, ""))
 	if err != nil {
 		return errors.Wrap(err, fname)
 	}
@@ -205,7 +205,7 @@ func updateCurrentVersionFromLongtail(
 
 	var hash longtaillib.Longtail_HashAPI
 
-	vbuffer, err := longtailutils.ReadFromURI(sourceFilePath, longtailutils.WithS3EndpointResolverURI(sourceEndpointResolverURI))
+	vbuffer, err := longtailutils.ReadFromURI(sourceFilePath, longtailutils.WithS3Options(sourceEndpointResolverURI, false, ""))
 	if err != nil {
 		err := errors.Wrap(err, "longtailutils.ReadFromURI() failed")
 		return cloneVersionIndex(targetPathVersionIndex), hash, errors.Wrap(err, fname)
@@ -481,7 +481,7 @@ func cloneOneVersion(
 	}
 	defer vbuffer.Dispose()
 
-	err = longtailutils.WriteToURI(targetFilePath, vbuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(targetEndpointResolverURI))
+	err = longtailutils.WriteToURI(targetFilePath, vbuffer.ToBuffer(), longtailutils.WithS3Options(targetEndpointResolverURI, false, ""))
 	if err != nil {
 		return targetVersionIndex, errors.Wrap(err, fname)
 	}
@@ -500,7 +500,7 @@ func cloneOneVersion(
 			return targetVersionIndex, errors.Wrap(err, fname)
 		}
 		defer versionLocalStoreIndexBuffer.Dispose()
-		err = longtailutils.WriteToURI(versionLocalStoreIndexPath, versionLocalStoreIndexBuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(targetEndpointResolverURI))
+		err = longtailutils.WriteToURI(versionLocalStoreIndexPath, versionLocalStoreIndexBuffer.ToBuffer(), longtailutils.WithS3Options(targetEndpointResolverURI, false, ""))
 		if err != nil {
 			return targetVersionIndex, errors.Wrap(err, fname)
 		}
@@ -580,7 +580,7 @@ func cloneStore(
 	localFS := longtaillib.CreateFSStorageAPI()
 	defer localFS.Dispose()
 
-	sourceRemoteIndexStore, err := remotestore.CreateBlockStoreForURI(sourceStoreURI, nil, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, enableFileMapping, longtailutils.WithS3EndpointResolverURI(sourceEndpointResolverURI))
+	sourceRemoteIndexStore, err := remotestore.CreateBlockStoreForURI(sourceStoreURI, nil, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, enableFileMapping, longtailutils.WithS3Options(sourceEndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
@@ -614,7 +614,7 @@ func cloneStore(
 	defer sourceLRUBlockStore.Dispose()
 	defer sourceStore.Dispose()
 
-	targetRemoteStore, err := remotestore.CreateBlockStoreForURI(targetStoreURI, nil, jobs, remoteStoreWorkerCount, targetBlockSize, maxChunksPerBlock, remotestore.ReadWrite, enableFileMapping, longtailutils.WithS3EndpointResolverURI(targetEndpointResolverURI))
+	targetRemoteStore, err := remotestore.CreateBlockStoreForURI(targetStoreURI, nil, jobs, remoteStoreWorkerCount, targetBlockSize, maxChunksPerBlock, remotestore.ReadWrite, enableFileMapping, longtailutils.WithS3Options(targetEndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}

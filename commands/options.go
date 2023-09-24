@@ -41,6 +41,14 @@ type S3EndpointResolverURLOption struct {
 	S3EndpointResolverURL string `name:"s3-endpoint-resolver-uri" help:"Optional URI for S3 endpoint resolver"`
 }
 
+type S3CannedACLOption struct {
+	S3CannedACL string `name:"s3-canned-acl" help"Optional string of the canned ACL to apply to the S3 objects" default:""`
+}
+
+type S3AnonymousOption struct {
+	S3Anonymous bool `name:"s3-anonymous" help"Optional flag to use anonymous credentials" default:"false"`
+}
+
 type CachePathOption struct {
 	CachePath string `name:"cache-path" help:"Location for cached blocks"`
 }

@@ -19,13 +19,15 @@ type getExistingContentCompletionAPI struct {
 	err        error
 }
 
-func WithS3EndpointResolverURI(endpointURI string) longtailstorelib.BlobStoreOption {
+func WithS3Options(endpointURI string, anonymous bool, cannedACL string) longtailstorelib.BlobStoreOption {
 	return func(options interface{}) {
 		s3options, ok := options.(*longtailstorelib.S3Options)
 		if !ok {
 			return
 		}
 		s3options.EndpointResolverURI = endpointURI
+		s3options.Anonymous = anonymous
+		s3options.CannedACL = cannedACL
 	}
 }
 

@@ -33,6 +33,7 @@ func downsync(
 	blobStoreURI string,
 	s3EndpointResolverURI string,
 	sourceFilePath string,
+	s3Anonymous bool,
 	sourceFilePaths []string,
 	targetFolderPath string,
 	targetIndexPath string,
@@ -141,7 +142,7 @@ func downsync(
 
 	var sourceVersionIndex longtaillib.Longtail_VersionIndex
 	for index, sourceFilePath := range sourceFilePaths {
-		oneVersionIndex, err := readVersionIndex(sourceFilePath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		oneVersionIndex, err := readVersionIndex(sourceFilePath, longtailutils.WithS3Options(s3EndpointResolverURI, s3Anonymous, ""))
 		if err != nil {
 			err = errors.Wrapf(err, "Cant read version index from `%s`", sourceFilePath)
 			return storeStats, timeStats, errors.Wrap(err, fname)
@@ -193,7 +194,7 @@ func downsync(
 	}
 
 	// MaxBlockSize and MaxChunksPerBlock are just temporary values until we get the remote index settings
-	remoteIndexStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, versionLocalStoreIndexPaths, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, enableFileMapping, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	remoteIndexStore, err := remotestore.CreateBlockStoreForURI(blobStoreURI, versionLocalStoreIndexPaths, jobs, remoteStoreWorkerCount, 8388608, 1024, remotestore.ReadOnly, enableFileMapping, longtailutils.WithS3Options(s3EndpointResolverURI, s3Anonymous, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
@@ -469,6 +470,7 @@ type DownsyncCmd struct {
 	StorageURIOption
 	S3EndpointResolverURLOption
 	SourceUriOption
+	S3AnonymousOption
 	MultiSourceUrisOption
 	TargetPathOption
 	TargetIndexUriOption
@@ -492,6 +494,7 @@ func (r *DownsyncCmd) Run(ctx *Context) error {
 		r.StorageURI,
 		r.S3EndpointResolverURL,
 		r.SourcePath,
+		r.S3Anonymous,
 		r.SourcePaths,
 		r.TargetPath,
 		r.TargetIndexPath,

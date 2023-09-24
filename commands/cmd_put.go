@@ -19,6 +19,7 @@ func put(
 	numRemoteWorkerCount int,
 	blobStoreURI string,
 	s3EndpointResolverURI string,
+	s3CannedACL string,
 	sourceFolderPath string,
 	sourceIndexPath string,
 	targetIndexFilePath string,
@@ -41,6 +42,7 @@ func put(
 		"numRemoteWorkerCount":       numRemoteWorkerCount,
 		"blobStoreURI":               blobStoreURI,
 		"s3EndpointResolverURI":      s3EndpointResolverURI,
+		"s3CannedACL":                s3CannedACL,
 		"sourceFolderPath":           sourceFolderPath,
 		"sourceIndexPath":            sourceIndexPath,
 		"targetIndexFilePath":        targetIndexFilePath,
@@ -95,6 +97,7 @@ func put(
 		numRemoteWorkerCount,
 		blobStoreURI,
 		s3EndpointResolverURI,
+		s3CannedACL,
 		sourceFolderPath,
 		sourceIndexPath,
 		targetIndexFilePath,
@@ -143,7 +146,7 @@ func put(
 		}
 		os.Remove(tmpFilePath)
 
-		err = longtailutils.WriteToURI(targetPath, bytes, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		err = longtailutils.WriteToURI(targetPath, bytes, longtailutils.WithS3Options(s3EndpointResolverURI, false, s3CannedACL))
 		if err != nil {
 			return storeStats, timeStats, errors.Wrapf(err, fname)
 		}
@@ -162,6 +165,7 @@ type PutCmd struct {
 	VersionLocalStoreIndexPath string `name:"version-local-store-index-path" help:"Target file uri for a store index optimized for this particular version"`
 	OptionalStorageURI         string `name:"storage-uri" help"Storage URI (local file system, GCS and S3 bucket URI supported)"`
 	S3EndpointResolverURLOption
+	S3CannedACLOption
 	SourcePath                    string `name:"source-path" help:"Source folder path" required:""`
 	SourceIndexPath               string `name:"source-index-path" help:"Optional pre-computed index of source-path"`
 	DisableVersionLocalStoreIndex bool   `name:"no-version-local-store-index" help:"Disable saving of store index optimized for this particular version"`
@@ -182,6 +186,7 @@ func (r *PutCmd) Run(ctx *Context) error {
 		ctx.NumRemoteWorkerCount,
 		r.OptionalStorageURI,
 		r.S3EndpointResolverURL,
+		r.S3CannedACL,
 		r.SourcePath,
 		r.SourceIndexPath,
 		r.TargetFileIndexPath,

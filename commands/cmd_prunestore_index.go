@@ -76,7 +76,7 @@ func pruneOneUsingStoreIndex(
 			return
 		}
 		defer sbuffer.Dispose()
-		err = longtailutils.WriteToURI(versionLocalStoreIndexFilePath, sbuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		err = longtailutils.WriteToURI(versionLocalStoreIndexFilePath, sbuffer.ToBuffer(), longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 		if err != nil {
 			existingStoreIndex.Dispose()
 			result.err = errors.Wrap(err, fname)
@@ -280,7 +280,7 @@ func pruneStoreIndex(
 	}
 
 	readStoreIndexStartTime := time.Now()
-	storeIndexBuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	storeIndexBuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
@@ -335,7 +335,7 @@ func pruneStoreIndex(
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
-	err = longtailutils.WriteToURI(storeIndexPath, prunedStoreIndexBuffer.ToBuffer(), longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	err = longtailutils.WriteToURI(storeIndexPath, prunedStoreIndexBuffer.ToBuffer(), longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	timeStats = append(timeStats, longtailutils.TimeStat{"Write store index", time.Since(writeStoreIndexStartTime)})
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)

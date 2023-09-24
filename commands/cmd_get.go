@@ -17,6 +17,7 @@ func get(
 	getConfigPath string,
 	getConfigPaths []string,
 	s3EndpointResolverURI string,
+	s3Anonymous bool,
 	targetFolderPath string,
 	targetIndexPath string,
 	localCachePath string,
@@ -68,7 +69,7 @@ func get(
 	var sourceFilePaths []string
 	var versionLocalStoreIndexPaths []string
 	for _, getConfigPath := range getConfigPaths {
-		vbuffer, err := longtailutils.ReadFromURI(getConfigPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		vbuffer, err := longtailutils.ReadFromURI(getConfigPath, longtailutils.WithS3Options(s3EndpointResolverURI, s3Anonymous, ""))
 		if err != nil {
 			return storeStats, timeStats, errors.Wrap(err, fname)
 		}
@@ -119,6 +120,7 @@ func get(
 		blobStoreURI,
 		s3EndpointResolverURI,
 		"",
+		s3Anonymous,
 		sourceFilePaths,
 		targetFolderPath,
 		targetIndexPath,
@@ -144,6 +146,7 @@ type GetCmd struct {
 	GetConfigURI  string   `name:"source-path" help:"File uri(s) for json formatted get-config file" xor:"source-path,source-paths" required:""`
 	GetConfigURIs []string `name:"source-paths" help:"File uri(s) for json formatted get-config file" xor:"source-path,source-paths" required:"" sep:"|"`
 	S3EndpointResolverURLOption
+	S3AnonymousOption
 	TargetPathOption
 	TargetIndexUriOption
 	ValidateTargetOption
@@ -165,6 +168,7 @@ func (r *GetCmd) Run(ctx *Context) error {
 		r.GetConfigURI,
 		r.GetConfigURIs,
 		r.S3EndpointResolverURL,
+		r.S3Anonymous,
 		r.TargetPath,
 		r.TargetIndexPath,
 		r.CachePath,

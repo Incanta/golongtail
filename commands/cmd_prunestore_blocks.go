@@ -41,7 +41,7 @@ func pruneStoreBlocks(
 	storeStats := []longtailutils.StoreStat{}
 	timeStats := []longtailutils.TimeStat{}
 
-	blobStore, err := longtailstorelib.CreateBlobStoreForURI(blocksRootPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+	blobStore, err := longtailstorelib.CreateBlobStoreForURI(blocksRootPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 	if err != nil {
 		return storeStats, timeStats, errors.Wrap(err, fname)
 	}
@@ -56,7 +56,7 @@ func pruneStoreBlocks(
 	go func() {
 		const fname = "GetStoreIndexAsync"
 		start := time.Now()
-		storeIndexBuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3EndpointResolverURI(s3EndpointResolverURI))
+		storeIndexBuffer, err := longtailutils.ReadFromURI(storeIndexPath, longtailutils.WithS3Options(s3EndpointResolverURI, false, ""))
 		if err != nil {
 			readStoreIndexAsyncResultChannel <- ReadStoreIndexAsyncResult{err: errors.Wrap(err, fname), elapsed: time.Since(start)}
 			return
